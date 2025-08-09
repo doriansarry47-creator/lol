@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
 import { ExerciseCard } from "@/components/exercise-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { exercises, categories, levels } from "@/lib/exercises-data";
-import type { Exercise } from "@/lib/exercises-data";
+import type { Exercise as StaticExercise } from "@/lib/exercises-data";
+import type { Exercise } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Exercises() {
@@ -12,13 +14,36 @@ export default function Exercises() {
   const [selectedLevel, setSelectedLevel] = useState<keyof typeof levels | 'all'>('all');
   const { toast } = useToast();
 
-  const filteredExercises = exercises.filter((exercise) => {
+  const { data: apiExercises = [], isLoading } = useQuery<Exercise[]>({
+    queryKey: ["/api/exercises"]
+  });
+
+  // Convert API exercises to the format expected by the UI
+  const convertedExercises = apiExercises.map((exercise): StaticExercise => ({
+    id: exercise.id,
+    title: exercise.title,
+    description: exercise.description,
+    category: exercise.category as keyof typeof categories,
+    level: exercise.difficulty as keyof typeof levels,
+    duration: exercise.duration,
+    intensity: 5, // Default intensity
+    instructions: exercise.instructions || [],
+    equipment: [], // Default empty array
+    benefits: [], // Default empty array
+    videoUrl: exercise.videoUrl || undefined,
+    imageUrl: exercise.imageUrl || undefined
+  }));
+
+  // Combine API exercises with static exercises for now
+  const allExercises = [...exercises, ...convertedExercises];
+
+  const filteredExercises = allExercises.filter((exercise) => {
     const categoryMatch = exercise.category === selectedCategory;
     const levelMatch = selectedLevel === 'all' || exercise.level === selectedLevel;
     return categoryMatch && levelMatch;
   });
 
-  const handleStartExercise = (exercise: Exercise) => {
+  const handleStartExercise = (exercise: StaticExercise) => {
     toast({
       title: "Exercice démarré",
       description: `Vous avez commencé "${exercise.title}". Bonne séance !`,
@@ -27,6 +52,19 @@ export default function Exercises() {
     window.location.href = `/exercise/${exercise.id}`;
   };
 
+  if (isLoading) {
+    return (
+      <>
+        <Navigation />
+        <main className="container mx-auto px-4 py-6 pb-20 md:pb-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-lg">Chargement des exercices...</div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <Navigation />
@@ -34,10 +72,22 @@ export default function Exercises() {
         
         {/* Page Header */}
         <section className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Bibliothèque d'Exercices</h1>
-          <p className="text-muted-foreground">
-            Choisissez parmi nos exercices adaptés à votre niveau et vos besoins du moment.
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Bibliothèque d'Exercices</h1>
+              <p className="text-muted-foreground">
+                Choisissez parmi nos exercices adaptés à votre niveau et vos besoins du moment.
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/admin'}
+              data-testid="button-admin-panel"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+            >
+              Administration
+            </Button>
+          </div>
         </section>
 
         {/* Filters */}

@@ -9,6 +9,7 @@ import ExerciseDetail from "@/pages/exercise-detail";
 import Tracking from "@/pages/tracking";
 import Education from "@/pages/education";
 import Profile from "@/pages/profile";
+import AdminPanel from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/tracking" component={Tracking} />
       <Route path="/education" component={Education} />
       <Route path="/profile" component={Profile} />
+      <Route path="/admin" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>
   );
