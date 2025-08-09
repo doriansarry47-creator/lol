@@ -14,6 +14,7 @@ import { Plus, Edit, Trash2, Clock, TrendingUp, Users, Activity } from "lucide-r
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertExerciseSchema, updateExerciseSchema, type Exercise, type InsertExercise, type UpdateExercise } from "@shared/schema";
+import { z } from "zod";
 
 const categories = [
   { value: "craving_reduction", label: "Réduction du craving" },
@@ -168,11 +169,11 @@ export default function AdminPanel() {
     }
   };
 
-  const onCreateSubmit = (data: InsertExercise) => {
+  const onCreateSubmit = (data: InsertExercise & { instructions: string }) => {
     createMutation.mutate(data);
   };
 
-  const onEditSubmit = (data: UpdateExercise) => {
+  const onEditSubmit = (data: UpdateExercise & { instructions?: string }) => {
     if (selectedExercise) {
       updateMutation.mutate({ id: selectedExercise.id, data });
     }

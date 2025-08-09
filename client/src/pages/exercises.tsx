@@ -19,23 +19,25 @@ export default function Exercises() {
   });
 
   // Convert API exercises to the format expected by the UI
-  const convertedExercises = apiExercises.map((exercise): StaticExercise => ({
-    id: exercise.id,
-    title: exercise.title,
-    description: exercise.description,
-    category: exercise.category as keyof typeof categories,
-    level: exercise.difficulty as keyof typeof levels,
-    duration: exercise.duration,
-    intensity: 5, // Default intensity
-    instructions: exercise.instructions || [],
-    equipment: [], // Default empty array
-    benefits: [], // Default empty array
-    videoUrl: exercise.videoUrl || undefined,
-    imageUrl: exercise.imageUrl || undefined
-  }));
+  const convertedExercises = apiExercises
+    .filter(exercise => exercise.isActive !== false) // Only show active exercises
+    .map((exercise): StaticExercise => ({
+      id: exercise.id,
+      title: exercise.title,
+      description: exercise.description,
+      category: exercise.category as keyof typeof categories,
+      level: exercise.difficulty as keyof typeof levels,
+      duration: exercise.duration,
+      intensity: 'moderate', // Default intensity
+      type: 'physical' as const,
+      instructions: exercise.instructions || [],
+      benefits: [], // Default empty array
+      videoUrl: exercise.videoUrl || undefined,
+      imageUrl: exercise.imageUrl || ""
+    }));
 
-  // Combine API exercises with static exercises for now
-  const allExercises = [...exercises, ...convertedExercises];
+  // Use only API exercises if available, otherwise fallback to static exercises
+  const allExercises = apiExercises.length > 0 ? convertedExercises : exercises;
 
   const filteredExercises = allExercises.filter((exercise) => {
     const categoryMatch = exercise.category === selectedCategory;
