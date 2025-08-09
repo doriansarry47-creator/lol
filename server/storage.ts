@@ -5,7 +5,6 @@ import {
   beckAnalyses,
   userBadges,
   userStats,
-  exercises,
   type User,
   type InsertUser,
   type CravingEntry,
@@ -17,9 +16,6 @@ import {
   type UserBadge,
   type InsertUserBadge,
   type UserStats,
-  type Exercise,
-  type InsertExercise,
-  type UpdateExercise,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -40,13 +36,6 @@ export interface IStorage {
   getExerciseSessions(userId: string, limit?: number): Promise<ExerciseSession[]>;
   getUserStats(userId: string): Promise<UserStats | undefined>;
 
-  // Exercise management operations
-  getAllExercises(): Promise<Exercise[]>;
-  getExercise(id: string): Promise<Exercise | undefined>;
-  createExercise(exercise: InsertExercise): Promise<Exercise>;
-  updateExercise(id: string, exercise: UpdateExercise): Promise<Exercise>;
-  deleteExercise(id: string): Promise<boolean>;
-
   // Beck analysis operations
   createBeckAnalysis(analysis: InsertBeckAnalysis): Promise<BeckAnalysis>;
   getBeckAnalyses(userId: string, limit?: number): Promise<BeckAnalysis[]>;
@@ -64,80 +53,6 @@ export class MemStorage implements IStorage {
   private beckAnalyses: Map<string, BeckAnalysis> = new Map();
   private userBadges: Map<string, UserBadge> = new Map();
   private userStats: Map<string, UserStats> = new Map();
-  private exercises: Map<string, Exercise> = new Map();
-
-  constructor() {
-    this.initializeExercises();
-  }
-
-  private initializeExercises() {
-    const sampleExercises: Exercise[] = [
-      {
-        id: "ex-1",
-        title: "Respiration Profonde",
-        description: "Technique de respiration pour réduire le stress et les cravings",
-        category: "craving_reduction",
-        difficulty: "beginner",
-        duration: 5,
-        instructions: [
-          "Asseyez-vous confortablement",
-          "Inspirez lentement par le nez pendant 4 secondes",
-          "Retenez votre respiration pendant 4 secondes",
-          "Expirez par la bouche pendant 6 secondes",
-          "Répétez 10 fois"
-        ],
-        videoUrl: null,
-        imageUrl: null,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "ex-2",
-        title: "Marche Rapide",
-        description: "Exercice cardiovasculaire pour libérer les endorphines",
-        category: "energy_boost",
-        difficulty: "intermediate",
-        duration: 20,
-        instructions: [
-          "Trouvez un endroit sûr pour marcher",
-          "Commencez par un rythme modéré",
-          "Accélérez progressivement",
-          "Maintenez un rythme soutenu",
-          "Terminez par un retour au calme"
-        ],
-        videoUrl: null,
-        imageUrl: null,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "ex-3",
-        title: "Méditation Guidée",
-        description: "Séance de méditation pour la gestion des émotions",
-        category: "emotion_management",
-        difficulty: "beginner",
-        duration: 15,
-        instructions: [
-          "Installez-vous dans un endroit calme",
-          "Fermez les yeux ou fixez un point",
-          "Concentrez-vous sur votre respiration",
-          "Observez vos pensées sans les juger",
-          "Revenez à votre respiration si votre esprit divague"
-        ],
-        videoUrl: null,
-        imageUrl: null,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }
-    ];
-
-    sampleExercises.forEach(exercise => {
-      this.exercises.set(exercise.id, exercise);
-    });
-  }
 
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
@@ -150,13 +65,10 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = { 
+      ...insertUser, 
       id,
-      email: insertUser.email || null,
-      firstName: insertUser.firstName || null,
-      lastName: insertUser.lastName || null,
-      profileImageUrl: insertUser.profileImageUrl || null,
-      level: insertUser.level || 1,
-      points: insertUser.points || 0,
+      level: 1,
+      points: 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -195,12 +107,8 @@ export class MemStorage implements IStorage {
   async createCravingEntry(insertEntry: InsertCravingEntry): Promise<CravingEntry> {
     const id = randomUUID();
     const entry: CravingEntry = {
+      ...insertEntry,
       id,
-      userId: insertEntry.userId,
-      intensity: insertEntry.intensity,
-      triggers: insertEntry.triggers || null,
-      emotions: insertEntry.emotions || null,
-      notes: insertEntry.notes || null,
       createdAt: new Date(),
     };
     this.cravingEntries.set(id, entry);
@@ -251,13 +159,8 @@ export class MemStorage implements IStorage {
   async createExerciseSession(insertSession: InsertExerciseSession): Promise<ExerciseSession> {
     const id = randomUUID();
     const session: ExerciseSession = {
+      ...insertSession,
       id,
-      userId: insertSession.userId,
-      exerciseId: insertSession.exerciseId,
-      duration: insertSession.duration || null,
-      completed: insertSession.completed || null,
-      cratingBefore: insertSession.cratingBefore || null,
-      cravingAfter: insertSession.cravingAfter || null,
       createdAt: new Date(),
     };
     this.exerciseSessions.set(id, session);
@@ -267,15 +170,15 @@ export class MemStorage implements IStorage {
       const currentStats = this.userStats.get(session.userId);
       if (currentStats) {
         await this.updateUserStats(session.userId, {
-          exercisesCompleted: (currentStats.exercisesCompleted || 0) + 1,
-          totalDuration: (currentStats.totalDuration || 0) + (session.duration || 0),
+          exercisesCompleted: currentStats.exercisesCompleted + 1,
+          totalDuration: currentStats.totalDuration + (session.duration || 0),
         });
       }
 
       // Update user points and level
       const user = this.users.get(session.userId);
       if (user) {
-        const newPoints = (user.points || 0) + 10; // 10 points per completed exercise
+        const newPoints = user.points + 10; // 10 points per completed exercise
         const newLevel = Math.floor(newPoints / 100) + 1; // Level up every 100 points
         
         const updatedUser = { ...user, points: newPoints, level: newLevel, updatedAt: new Date() };
@@ -301,66 +204,11 @@ export class MemStorage implements IStorage {
     return this.userStats.get(userId);
   }
 
-  // Exercise management operations
-  async getAllExercises(): Promise<Exercise[]> {
-    return Array.from(this.exercises.values()).filter(exercise => exercise.isActive !== false);
-  }
-
-  async getExercise(id: string): Promise<Exercise | undefined> {
-    return this.exercises.get(id);
-  }
-
-  async createExercise(insertExercise: InsertExercise): Promise<Exercise> {
-    const id = randomUUID();
-    const exercise: Exercise = {
-      id,
-      title: insertExercise.title,
-      description: insertExercise.description,
-      category: insertExercise.category,
-      difficulty: insertExercise.difficulty,
-      duration: insertExercise.duration,
-      instructions: insertExercise.instructions,
-      videoUrl: insertExercise.videoUrl || null,
-      imageUrl: insertExercise.imageUrl || null,
-      isActive: insertExercise.isActive ?? true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.exercises.set(id, exercise);
-    return exercise;
-  }
-
-  async updateExercise(id: string, updateExercise: UpdateExercise): Promise<Exercise> {
-    const existing = this.exercises.get(id);
-    if (!existing) {
-      throw new Error("Exercise not found");
-    }
-    
-    const updated: Exercise = {
-      ...existing,
-      ...updateExercise,
-      updatedAt: new Date(),
-    };
-    this.exercises.set(id, updated);
-    return updated;
-  }
-
-  async deleteExercise(id: string): Promise<boolean> {
-    return this.exercises.delete(id);
-  }
-
   async createBeckAnalysis(insertAnalysis: InsertBeckAnalysis): Promise<BeckAnalysis> {
     const id = randomUUID();
     const analysis: BeckAnalysis = {
+      ...insertAnalysis,
       id,
-      userId: insertAnalysis.userId,
-      situation: insertAnalysis.situation || null,
-      automaticThoughts: insertAnalysis.automaticThoughts || null,
-      emotions: insertAnalysis.emotions || null,
-      emotionIntensity: insertAnalysis.emotionIntensity || null,
-      rationalResponse: insertAnalysis.rationalResponse || null,
-      newFeeling: insertAnalysis.newFeeling || null,
-      newIntensity: insertAnalysis.newIntensity || null,
       createdAt: new Date(),
     };
     this.beckAnalyses.set(id, analysis);
@@ -418,7 +266,7 @@ export class MemStorage implements IStorage {
     }
 
     // 50 exercises badge
-    if ((stats.exercisesCompleted || 0) >= 50) {
+    if (stats.exercisesCompleted >= 50) {
       const badge = await this.awardBadge({ userId, badgeType: '50_exercises' });
       if (badge) newBadges.push(badge);
     }

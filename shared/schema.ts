@@ -61,22 +61,6 @@ export const userBadges = pgTable("user_badges", {
   earnedAt: timestamp("earned_at").defaultNow(),
 });
 
-// Exercises table
-export const exercises = pgTable("exercises", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  title: varchar("title").notNull(),
-  description: text("description").notNull(),
-  category: varchar("category").notNull(), // 'craving_reduction', 'relaxation', 'energy_boost', 'emotion_management'
-  difficulty: varchar("difficulty").notNull(), // 'beginner', 'intermediate', 'advanced'
-  duration: integer("duration").notNull(), // in minutes
-  instructions: jsonb("instructions").$type<string[]>().notNull(),
-  videoUrl: varchar("video_url"),
-  imageUrl: varchar("image_url"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 // User progress/stats
 export const userStats = pgTable("user_stats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -110,17 +94,6 @@ export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
   earnedAt: true,
 });
 
-export const insertExerciseSchema = createInsertSchema(exercises).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const updateExerciseSchema = createInsertSchema(exercises).omit({
-  id: true,
-  createdAt: true,
-}).partial();
-
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -133,6 +106,3 @@ export type InsertBeckAnalysis = z.infer<typeof insertBeckAnalysisSchema>;
 export type UserBadge = typeof userBadges.$inferSelect;
 export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
 export type UserStats = typeof userStats.$inferSelect;
-export type Exercise = typeof exercises.$inferSelect;
-export type InsertExercise = z.infer<typeof insertExerciseSchema>;
-export type UpdateExercise = z.infer<typeof updateExerciseSchema>;

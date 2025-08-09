@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCravingEntrySchema, insertExerciseSessionSchema, insertBeckAnalysisSchema, insertExerciseSchema, updateExerciseSchema } from "@shared/schema";
+import { insertCravingEntrySchema, insertExerciseSessionSchema, insertBeckAnalysisSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -114,66 +114,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(user);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
-
-  // Exercise management routes (admin)
-  app.get("/api/exercises", async (req, res) => {
-    try {
-      const exercises = await storage.getAllExercises();
-      res.json(exercises);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch exercises" });
-    }
-  });
-
-  app.get("/api/exercises/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const exercise = await storage.getExercise(id);
-      if (!exercise) {
-        return res.status(404).json({ message: "Exercise not found" });
-      }
-      res.json(exercise);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch exercise" });
-    }
-  });
-
-  app.post("/api/exercises", async (req, res) => {
-    try {
-      const data = insertExerciseSchema.parse(req.body);
-      const exercise = await storage.createExercise(data);
-      res.json(exercise);
-    } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : "Validation failed" });
-    }
-  });
-
-  app.put("/api/exercises/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const data = updateExerciseSchema.parse(req.body);
-      const exercise = await storage.updateExercise(id, data);
-      res.json(exercise);
-    } catch (error) {
-      if (error instanceof Error && error.message === "Exercise not found") {
-        return res.status(404).json({ message: "Exercise not found" });
-      }
-      res.status(400).json({ message: error instanceof Error ? error.message : "Validation failed" });
-    }
-  });
-
-  app.delete("/api/exercises/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const deleted = await storage.deleteExercise(id);
-      if (!deleted) {
-        return res.status(404).json({ message: "Exercise not found" });
-      }
-      res.json({ message: "Exercise deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete exercise" });
     }
   });
 
