@@ -1,5 +1,8 @@
+import { db } from "./db";
 import {
   users,
+  exercises,
+  psychoEducationContent,
   cravingEntries,
   exerciseSessions,
   beckAnalyses,
@@ -7,6 +10,10 @@ import {
   userStats,
   type User,
   type InsertUser,
+  type Exercise,
+  type InsertExercise,
+  type PsychoEducationContent,
+  type InsertPsychoEducationContent,
   type CravingEntry,
   type InsertCravingEntry,
   type ExerciseSession,
@@ -26,12 +33,20 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserStats(userId: string, stats: Partial<UserStats>): Promise<UserStats>;
 
+  // Exercise operations
+  getExercises(): Promise<Exercise[]>;
+  createExercise(exercise: InsertExercise): Promise<Exercise>;
+  
+  // Psychoeducation operations
+  getPsychoEducationContent(): Promise<PsychoEducationContent[]>;
+  createPsychoEducationContent(content: InsertPsychoEducationContent): Promise<PsychoEducationContent>;
+
   // Craving operations
   createCravingEntry(entry: InsertCravingEntry): Promise<CravingEntry>;
   getCravingEntries(userId: string, limit?: number): Promise<CravingEntry[]>;
   getCravingStats(userId: string, days?: number): Promise<{ average: number; trend: number }>;
 
-  // Exercise operations
+  // Exercise session operations
   createExerciseSession(session: InsertExerciseSession): Promise<ExerciseSession>;
   getExerciseSessions(userId: string, limit?: number): Promise<ExerciseSession[]>;
   getUserStats(userId: string): Promise<UserStats | undefined>;
@@ -48,6 +63,8 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<string, User> = new Map();
+  private exercises: Map<string, Exercise> = new Map();
+  private psychoEducationContent: Map<string, PsychoEducationContent> = new Map();
   private cravingEntries: Map<string, CravingEntry> = new Map();
   private exerciseSessions: Map<string, ExerciseSession> = new Map();
   private beckAnalyses: Map<string, BeckAnalysis> = new Map();
@@ -69,6 +86,7 @@ export class MemStorage implements IStorage {
       id,
       level: 1,
       points: 0,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -88,6 +106,44 @@ export class MemStorage implements IStorage {
     this.userStats.set(id, stats);
     
     return user;
+  }
+
+  async getExercises(): Promise<Exercise[]> {
+    return Array.from(this.exercises.values())
+      .filter(exercise => exercise.isActive)
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  async createExercise(insertExercise: InsertExercise): Promise<Exercise> {
+    const id = randomUUID();
+    const exercise: Exercise = {
+      ...insertExercise,
+      id,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.exercises.set(id, exercise);
+    return exercise;
+  }
+
+  async getPsychoEducationContent(): Promise<PsychoEducationContent[]> {
+    return Array.from(this.psychoEducationContent.values())
+      .filter(content => content.isActive)
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  async createPsychoEducationContent(insertContent: InsertPsychoEducationContent): Promise<PsychoEducationContent> {
+    const id = randomUUID();
+    const content: PsychoEducationContent = {
+      ...insertContent,
+      id,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.psychoEducationContent.set(id, content);
+    return content;
   }
 
   async updateUserStats(userId: string, statsUpdate: Partial<UserStats>): Promise<UserStats> {

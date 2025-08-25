@@ -6,12 +6,49 @@ import { z } from "zod";
 // Users table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  password: varchar("password").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  role: varchar("role").default("patient"), // 'patient' or 'admin'
   level: integer("level").default(1),
   points: integer("points").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Exercises table
+export const exercises = pgTable("exercises", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  description: text("description"),
+  category: varchar("category").notNull(), // 'cardio', 'strength', 'flexibility', 'mindfulness'
+  difficulty: varchar("difficulty").default("beginner"), // 'beginner', 'intermediate', 'advanced'
+  duration: integer("duration"), // in minutes
+  instructions: text("instructions"),
+  benefits: text("benefits"),
+  imageUrl: varchar("image_url"),
+  videoUrl: varchar("video_url"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Psychoeducation content table
+export const psychoEducationContent = pgTable("psycho_education_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  content: text("content").notNull(),
+  category: varchar("category").notNull(), // 'addiction', 'motivation', 'coping', 'relapse_prevention'
+  type: varchar("type").default("article"), // 'article', 'video', 'audio', 'interactive'
+  difficulty: varchar("difficulty").default("beginner"),
+  estimatedReadTime: integer("estimated_read_time"), // in minutes
+  imageUrl: varchar("image_url"),
+  videoUrl: varchar("video_url"),
+  audioUrl: varchar("audio_url"),
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -74,6 +111,24 @@ export const userStats = pgTable("user_stats", {
 });
 
 // Create insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertExerciseSchema = createInsertSchema(exercises).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPsychoEducationContentSchema = createInsertSchema(psychoEducationContent).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCravingEntrySchema = createInsertSchema(cravingEntries).omit({
   id: true,
   createdAt: true,
@@ -96,7 +151,11 @@ export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
 
 // Types
 export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Exercise = typeof exercises.$inferSelect;
+export type InsertExercise = z.infer<typeof insertExerciseSchema>;
+export type PsychoEducationContent = typeof psychoEducationContent.$inferSelect;
+export type InsertPsychoEducationContent = z.infer<typeof insertPsychoEducationContentSchema>;
 export type CravingEntry = typeof cravingEntries.$inferSelect;
 export type InsertCravingEntry = z.infer<typeof insertCravingEntrySchema>;
 export type ExerciseSession = typeof exerciseSessions.$inferSelect;
