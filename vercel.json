@@ -1,37 +1,36 @@
-
 {
   "version": 2,
   "builds": [
-    {
-      "src": "server/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["server/**", "shared/**", "migrations/**"]
-      }
-    },
     {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
         "distDir": "dist/public"
       }
+    },
+    {
+      "src": "server/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["server/**", "shared/**", "migrations/**"]
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "server/index.ts"  <-- NOTE: ici, c'est le chemin vers le fichier source du serveur, pas le fichier compilé
+      "dest": "server/index.ts"  <-- Cette route dirige les appels API vers votre fonction serverless
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/public/$1"
+      "dest": "/dist/public/$1"  <-- Cette route sert tous les autres chemins depuis votre frontend statique
     }
   ],
   "env": {
     "DATABASE_URL": "@database_url",
     "SESSION_SECRET": "@session_secret"
   },
-  "outputDirectory": "dist/public",  <-- AJOUTEZ CETTE LIGNE
-  "buildCommand": "npm run build",  <-- AJOUTEZ CETTE LIGNE
-  "devCommand": "npm run dev"  <-- AJOUTEZ CETTE LIGNE
+  "outputDirectory": "dist/public",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev"
 }
