@@ -13,8 +13,8 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/public"  <-- MODIFIEZ CETTE LIGNE
-      }
+        "distDir": "dist/public"      
+  }
     }
   ],
   "routes": [
@@ -24,7 +24,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/public/$1"  <-- MODIFIEZ CETTE LIGNE
+      "dest": "/dist/public/$1"  
     }
   ],
   "env": {
