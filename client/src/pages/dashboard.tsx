@@ -10,8 +10,14 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getEmergencyExercises } from "@/lib/exercises-data";
+import type { User, UserStats } from "@shared/schema";
 
 const DEMO_USER_ID = "demo-user-123";
+
+interface CravingStats {
+  average: number;
+  trend: number;
+}
 
 export default function Dashboard() {
   const [showCravingEntry, setShowCravingEntry] = useState(false);
@@ -25,16 +31,19 @@ export default function Dashboard() {
     },
   });
 
-  const { data: cravingStats } = useQuery({
+  const { data: cravingStats } = useQuery<CravingStats>({
     queryKey: ["/api/cravings", DEMO_USER_ID, "stats"],
+    initialData: { average: 0, trend: 0 },
   });
 
-  const { data: userStats } = useQuery({
+  const { data: userStats } = useQuery<UserStats>({
     queryKey: ["/api/users", DEMO_USER_ID, "stats"],
+    initialData: { exercisesCompleted: 0, totalDuration: 0, currentStreak: 0, longestStreak: 0, averageCraving: 0, id: '', userId: '', updatedAt: new Date() },
   });
 
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<User>({
     queryKey: ["/api/users", DEMO_USER_ID],
+    initialData: { level: 1, points: 0, email: '', password: '', firstName: '', lastName: '', profileImageUrl: '', role: '', isActive: true, id: '', createdAt: new Date(), updatedAt: new Date() },
   });
 
   // Initialize demo user on mount

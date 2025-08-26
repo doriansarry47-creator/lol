@@ -62,6 +62,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/auth/me", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) {
+        return res.status(401).json({ message: "Session non valide" });
+      }
       const user = await AuthService.getUserById(req.session.user.id);
       if (!user) {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
@@ -115,6 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Craving entries routes
   app.post("/api/cravings", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const data = insertCravingEntrySchema.parse({
         ...req.body,
         userId: req.session.user.id
@@ -128,6 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cravings", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const entries = await storage.getCravingEntries(userId, limit);
@@ -139,6 +144,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/cravings/stats", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const days = req.query.days ? parseInt(req.query.days as string) : undefined;
       const stats = await storage.getCravingStats(userId, days);
@@ -151,6 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Exercise sessions routes
   app.post("/api/exercise-sessions", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const data = insertExerciseSessionSchema.parse({
         ...req.body,
         userId: req.session.user.id
@@ -164,6 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/exercise-sessions", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const sessions = await storage.getExerciseSessions(userId, limit);
@@ -176,6 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Beck analysis routes
   app.post("/api/beck-analyses", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const data = insertBeckAnalysisSchema.parse({
         ...req.body,
         userId: req.session.user.id
@@ -189,6 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/beck-analyses", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const analyses = await storage.getBeckAnalyses(userId, limit);
@@ -201,6 +211,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User stats and badges routes
   app.get("/api/users/stats", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const stats = await storage.getUserStats(userId);
       res.json(stats);
@@ -211,6 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/users/badges", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const badges = await storage.getUserBadges(userId);
       res.json(badges);
@@ -221,6 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/users/profile", requireAuth, async (req, res) => {
     try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
       const userId = req.session.user.id;
       const user = await storage.getUser(userId);
       if (!user) {

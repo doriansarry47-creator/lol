@@ -2,34 +2,43 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigation } from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
+import type { CravingEntry, ExerciseSession, BeckAnalysis, UserStats } from "@shared/schema";
 
 const DEMO_USER_ID = "demo-user-123";
+
+interface CravingStats {
+  average: number;
+  trend: number;
+}
 
 export default function Tracking() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
-  const { data: cravingEntries, isLoading: cravingLoading } = useQuery({
+  const { data: cravingEntries, isLoading: cravingLoading } = useQuery<CravingEntry[]>({
     queryKey: ["/api/cravings", DEMO_USER_ID],
+    initialData: [],
   });
 
-  const { data: cravingStats, isLoading: statsLoading } = useQuery({
+  const { data: cravingStats, isLoading: statsLoading } = useQuery<CravingStats>({
     queryKey: ["/api/cravings", DEMO_USER_ID, "stats"],
+    initialData: { average: 0, trend: 0 },
   });
 
-  const { data: exerciseSessions, isLoading: sessionsLoading } = useQuery({
+  const { data: exerciseSessions, isLoading: sessionsLoading } = useQuery<ExerciseSession[]>({
     queryKey: ["/api/exercise-sessions", DEMO_USER_ID],
+    initialData: [],
   });
 
-  const { data: userStats, isLoading: userStatsLoading } = useQuery({
+  const { data: userStats, isLoading: userStatsLoading } = useQuery<UserStats>({
     queryKey: ["/api/users", DEMO_USER_ID, "stats"],
+    initialData: { exercisesCompleted: 0, totalDuration: 0, currentStreak: 0, longestStreak: 0, averageCraving: 0, id: '', userId: '', updatedAt: new Date() },
   });
 
-  const { data: beckAnalyses, isLoading: beckLoading } = useQuery({
+  const { data: beckAnalyses, isLoading: beckLoading } = useQuery<BeckAnalysis[]>({
     queryKey: ["/api/beck-analyses", DEMO_USER_ID],
+    initialData: [],
   });
 
   const isLoading = cravingLoading || statsLoading || sessionsLoading || userStatsLoading || beckLoading;
@@ -57,8 +66,9 @@ export default function Tracking() {
     );
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
+  const formatDate = (date: Date | null) => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('fr-FR', {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',
@@ -175,11 +185,11 @@ export default function Tracking() {
               <CardContent>
                 {cravingEntries && cravingEntries.length > 0 ? (
                   <div className="space-y-4">
-                    {cravingEntries.slice(0, 10).map((entry: any) => (
+                    {cravingEntries.slice(0, 10).map((entry: CravingEntry) => (
                       <div key={entry.id} className="border border-border rounded-lg p-4" data-testid={`craving-entry-${entry.id}`}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm text-muted-foreground">
-                            {formatDate(entry.createdAt)}
+                            {formatDate(entry.createdAt!)}
                           </span>
                           <div className="flex items-center">
                             <span className="text-sm font-medium mr-2">Intensité:</span>
@@ -244,11 +254,11 @@ export default function Tracking() {
               <CardContent>
                 {exerciseSessions && exerciseSessions.length > 0 ? (
                   <div className="space-y-4">
-                    {exerciseSessions.slice(0, 10).map((session: any) => (
+                    {exerciseSessions.slice(0, 10).map((session: ExerciseSession) => (
                       <div key={session.id} className="border border-border rounded-lg p-4" data-testid={`exercise-session-${session.id}`}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm text-muted-foreground">
-                            {formatDate(session.createdAt)}
+                            {formatDate(session.createdAt!)}
                           </span>
                           <div className="flex items-center space-x-2">
                             {session.completed && (
@@ -307,11 +317,11 @@ export default function Tracking() {
               <CardContent>
                 {beckAnalyses && beckAnalyses.length > 0 ? (
                   <div className="space-y-6">
-                    {beckAnalyses.slice(0, 5).map((analysis: any) => (
+                    {beckAnalyses.slice(0, 5).map((analysis: BeckAnalysis) => (
                       <div key={analysis.id} className="border border-border rounded-lg p-4" data-testid={`beck-analysis-${analysis.id}`}>
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-sm text-muted-foreground">
-                            {formatDate(analysis.createdAt)}
+                            {formatDate(analysis.createdAt!)}
                           </span>
                           {analysis.emotionIntensity && analysis.newIntensity && (
                             <div className="flex items-center space-x-2">

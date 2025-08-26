@@ -10,8 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import type { User, UserStats, UserBadge } from "@shared/schema";
 
 const DEMO_USER_ID = "demo-user-123";
+
+interface CravingStats {
+  average: number;
+  trend: number;
+}
 
 export default function Profile() {
   const [notifications, setNotifications] = useState({
@@ -24,20 +30,24 @@ export default function Profile() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading: userLoading } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ["/api/users", DEMO_USER_ID],
+    initialData: { level: 1, points: 0, email: '', password: '', firstName: '', lastName: '', profileImageUrl: '', role: '', isActive: true, id: '', createdAt: new Date(), updatedAt: new Date() },
   });
 
-  const { data: userStats, isLoading: statsLoading } = useQuery({
+  const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ["/api/users", DEMO_USER_ID, "stats"],
+    initialData: { exercisesCompleted: 0, totalDuration: 0, currentStreak: 0, longestStreak: 0, averageCraving: 0, id: '', userId: '', updatedAt: new Date() },
   });
 
-  const { data: badges, isLoading: badgesLoading } = useQuery({
+  const { data: badges, isLoading: badgesLoading } = useQuery<UserBadge[]>({
     queryKey: ["/api/users", DEMO_USER_ID, "badges"],
+    initialData: [],
   });
 
-  const { data: cravingStats } = useQuery({
+  const { data: cravingStats } = useQuery<CravingStats>({
     queryKey: ["/api/cravings", DEMO_USER_ID, "stats"],
+    initialData: { average: 0, trend: 0 },
   });
 
   const isLoading = userLoading || statsLoading || badgesLoading;
@@ -271,7 +281,7 @@ export default function Profile() {
               <CardContent>
                 {badges && badges.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {badges.map((badge: any) => {
+                    {badges.map((badge: UserBadge) => {
                       const badgeInfo = getBadgeInfo(badge.badgeType);
                       return (
                         <div key={badge.id} className="border border-border rounded-lg p-4 text-center" data-testid={`badge-card-${badge.badgeType}`}>
@@ -283,7 +293,7 @@ export default function Profile() {
                           <h4 className="font-medium text-foreground mb-1">{badgeInfo.name}</h4>
                           <p className="text-xs text-muted-foreground mb-2">{badgeInfo.description}</p>
                           <p className="text-xs text-muted-foreground">
-                            Obtenu le {new Date(badge.earnedAt).toLocaleDateString('fr-FR')}
+                            {badge.earnedAt ? `Obtenu le ${new Date(badge.earnedAt).toLocaleDateString('fr-FR')}` : ''}
                           </p>
                         </div>
                       );
