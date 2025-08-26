@@ -16,6 +16,7 @@ function AppContent() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Login} />
       <Route path="/" component={Dashboard} />
       <Route path="/exercises" component={Exercises} />
       <Route path="/exercise/:id" component={ExerciseDetail} />
