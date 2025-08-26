@@ -81,17 +81,22 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
+    const user: User = {
       id,
+      email: insertUser.email,
+      password: insertUser.password,
+      firstName: insertUser.firstName || null,
+      lastName: insertUser.lastName || null,
+      role: insertUser.role || 'patient',
       level: 1,
       points: 0,
       isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      profileImageUrl: null,
     };
     this.users.set(id, user);
-    
+
     // Initialize user stats
     const stats: UserStats = {
       id: randomUUID(),
@@ -104,7 +109,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
     this.userStats.set(id, stats);
-    
+
     return user;
   }
 
@@ -117,11 +122,19 @@ export class MemStorage implements IStorage {
   async createExercise(insertExercise: InsertExercise): Promise<Exercise> {
     const id = randomUUID();
     const exercise: Exercise = {
-      ...insertExercise,
       id,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      title: insertExercise.title,
+      category: insertExercise.category,
+      description: insertExercise.description || null,
+      difficulty: insertExercise.difficulty || null,
+      duration: insertExercise.duration || null,
+      instructions: insertExercise.instructions || null,
+      benefits: insertExercise.benefits || null,
+      imageUrl: insertExercise.imageUrl || null,
+      videoUrl: insertExercise.videoUrl || null,
     };
     this.exercises.set(id, exercise);
     return exercise;
@@ -136,11 +149,19 @@ export class MemStorage implements IStorage {
   async createPsychoEducationContent(insertContent: InsertPsychoEducationContent): Promise<PsychoEducationContent> {
     const id = randomUUID();
     const content: PsychoEducationContent = {
-      ...insertContent,
       id,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      title: insertContent.title,
+      category: insertContent.category,
+      content: insertContent.content,
+      type: insertContent.type || null,
+      difficulty: insertContent.difficulty || null,
+      estimatedReadTime: insertContent.estimatedReadTime || null,
+      imageUrl: insertContent.imageUrl || null,
+      videoUrl: insertContent.videoUrl || null,
+      audioUrl: insertContent.audioUrl || null,
     };
     this.psychoEducationContent.set(id, content);
     return content;
@@ -155,7 +176,7 @@ export class MemStorage implements IStorage {
       id: currentStats?.id || randomUUID(),
       updatedAt: new Date(),
     } as UserStats;
-    
+
     this.userStats.set(userId, updatedStats);
     return updatedStats;
   }
@@ -163,15 +184,19 @@ export class MemStorage implements IStorage {
   async createCravingEntry(insertEntry: InsertCravingEntry): Promise<CravingEntry> {
     const id = randomUUID();
     const entry: CravingEntry = {
-      ...insertEntry,
-      id,
+      id: id,
+      userId: insertEntry.userId,
+      intensity: insertEntry.intensity,
+      triggers: insertEntry.triggers ? [...insertEntry.triggers] : [],
+      emotions: insertEntry.emotions ? [...insertEntry.emotions] : [],
+      notes: insertEntry.notes || null,
       createdAt: new Date(),
     };
     this.cravingEntries.set(id, entry);
-    
+
     // Update average craving
     await this.updateAverageCraving(insertEntry.userId);
-    
+
     return entry;
   }
 
@@ -186,7 +211,7 @@ export class MemStorage implements IStorage {
   async getCravingStats(userId: string, days = 30): Promise<{ average: number; trend: number }> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
-    
+
     const entries = Array.from(this.cravingEntries.values())
       .filter(entry => entry.userId === userId && entry.createdAt! > cutoffDate)
       .sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime());
@@ -194,16 +219,18 @@ export class MemStorage implements IStorage {
     if (entries.length === 0) return { average: 0, trend: 0 };
 
     const average = entries.reduce((sum, entry) => sum + entry.intensity, 0) / entries.length;
-    
+
     // Calculate trend (comparing first half vs second half)
     const midPoint = Math.floor(entries.length / 2);
+    if (midPoint < 1) return { average: Math.round(average * 10) / 10, trend: 0 };
+
     const firstHalf = entries.slice(0, midPoint);
     const secondHalf = entries.slice(midPoint);
-    
-    const firstAvg = firstHalf.reduce((sum, entry) => sum + entry.intensity, 0) / firstHalf.length;
-    const secondAvg = secondHalf.reduce((sum, entry) => sum + entry.intensity, 0) / secondHalf.length;
-    const trend = ((secondAvg - firstAvg) / firstAvg) * 100;
-    
+
+    const firstAvg = firstHalf.reduce((sum, entry) => sum + entry.intensity, 0) / firstHalf.length || 0;
+    const secondAvg = secondHalf.reduce((sum, entry) => sum + entry.intensity, 0) / secondHalf.length || 0;
+    const trend = firstAvg > 0 ? ((secondAvg - firstAvg) / firstAvg) * 100 : 0;
+
     return { average: Math.round(average * 10) / 10, trend: Math.round(trend) };
   }
 
@@ -215,8 +242,13 @@ export class MemStorage implements IStorage {
   async createExerciseSession(insertSession: InsertExerciseSession): Promise<ExerciseSession> {
     const id = randomUUID();
     const session: ExerciseSession = {
-      ...insertSession,
       id,
+      userId: insertSession.userId,
+      exerciseId: insertSession.exerciseId,
+      duration: insertSession.duration || null,
+      completed: insertSession.completed || false,
+      cratingBefore: insertSession.cratingBefore || null,
+      cravingAfter: insertSession.cravingAfter || null,
       createdAt: new Date(),
     };
     this.exerciseSessions.set(id, session);
@@ -226,17 +258,17 @@ export class MemStorage implements IStorage {
       const currentStats = this.userStats.get(session.userId);
       if (currentStats) {
         await this.updateUserStats(session.userId, {
-          exercisesCompleted: currentStats.exercisesCompleted + 1,
-          totalDuration: currentStats.totalDuration + (session.duration || 0),
+          exercisesCompleted: (currentStats.exercisesCompleted || 0) + 1,
+          totalDuration: (currentStats.totalDuration || 0) + (session.duration || 0),
         });
       }
 
       // Update user points and level
       const user = this.users.get(session.userId);
       if (user) {
-        const newPoints = user.points + 10; // 10 points per completed exercise
-        const newLevel = Math.floor(newPoints / 100) + 1; // Level up every 100 points
-        
+        const newPoints = (user.points || 0) + 10; // 10 points per completed exercise
+        const newLevel = Math.floor(newPoints / 100) + 1;
+
         const updatedUser = { ...user, points: newPoints, level: newLevel, updatedAt: new Date() };
         this.users.set(session.userId, updatedUser);
       }
@@ -263,8 +295,15 @@ export class MemStorage implements IStorage {
   async createBeckAnalysis(insertAnalysis: InsertBeckAnalysis): Promise<BeckAnalysis> {
     const id = randomUUID();
     const analysis: BeckAnalysis = {
-      ...insertAnalysis,
       id,
+      userId: insertAnalysis.userId,
+      situation: insertAnalysis.situation || null,
+      emotions: insertAnalysis.emotions || null,
+      automaticThoughts: insertAnalysis.automaticThoughts || null,
+      rationalResponse: insertAnalysis.rationalResponse || null,
+      newFeeling: insertAnalysis.newFeeling || null,
+      emotionIntensity: insertAnalysis.emotionIntensity || null,
+      newIntensity: insertAnalysis.newIntensity || null,
       createdAt: new Date(),
     };
     this.beckAnalyses.set(id, analysis);
@@ -289,7 +328,7 @@ export class MemStorage implements IStorage {
     // Check if badge already exists
     const existingBadge = Array.from(this.userBadges.values())
       .find(badge => badge.userId === insertBadge.userId && badge.badgeType === insertBadge.badgeType);
-    
+
     if (existingBadge) return existingBadge;
 
     const id = randomUUID();
@@ -306,23 +345,23 @@ export class MemStorage implements IStorage {
     const newBadges: UserBadge[] = [];
     const stats = this.userStats.get(userId);
     const sessions = await this.getExerciseSessions(userId);
-    
+
     if (!stats) return newBadges;
 
     // 7 days streak badge
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentSessions = sessions.filter(session => 
+    const recentSessions = sessions.filter(session =>
       session.completed && session.createdAt! > sevenDaysAgo
     );
-    
+
     if (recentSessions.length >= 7) {
       const badge = await this.awardBadge({ userId, badgeType: '7_days' });
       if (badge) newBadges.push(badge);
     }
 
     // 50 exercises badge
-    if (stats.exercisesCompleted >= 50) {
+    if ((stats.exercisesCompleted || 0) >= 50) {
       const badge = await this.awardBadge({ userId, badgeType: '50_exercises' });
       if (badge) newBadges.push(badge);
     }

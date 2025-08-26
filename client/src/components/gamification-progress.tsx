@@ -2,22 +2,26 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import type { User, UserStats, UserBadge } from "@shared/schema";
 
 interface GamificationProgressProps {
   userId: string;
 }
 
 export function GamificationProgress({ userId }: GamificationProgressProps) {
-  const { data: user, isLoading: userLoading } = useQuery({
+  const { data: user, isLoading: userLoading } = useQuery<User>({
     queryKey: ["/api/users", userId],
+    initialData: { level: 1, points: 0, email: '', password: '', firstName: '', lastName: '', profileImageUrl: '', role: '', isActive: true, id: '', createdAt: new Date(), updatedAt: new Date() },
   });
 
-  const { data: userStats, isLoading: statsLoading } = useQuery({
+  const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
     queryKey: ["/api/users", userId, "stats"],
+    initialData: { exercisesCompleted: 0, totalDuration: 0, currentStreak: 0, longestStreak: 0, averageCraving: 0, id: '', userId: '', updatedAt: new Date() },
   });
 
-  const { data: badges, isLoading: badgesLoading } = useQuery({
+  const { data: badges, isLoading: badgesLoading } = useQuery<UserBadge[]>({
     queryKey: ["/api/users", userId, "badges"],
+    initialData: [],
   });
 
   const isLoading = userLoading || statsLoading || badgesLoading;
