@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ProtectedRoute } from "@/components/protected-route";
 import Dashboard from "@/pages/dashboard";
 import Exercises from "@/pages/exercises";
 import ExerciseDetail from "@/pages/exercise-detail";
@@ -17,12 +18,39 @@ function AppContent() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Login} />
-      <Route path="/" component={Dashboard} />
-      <Route path="/exercises" component={Exercises} />
-      <Route path="/exercise/:id" component={ExerciseDetail} />
-      <Route path="/tracking" component={Tracking} />
-      <Route path="/education" component={Education} />
-      <Route path="/profile" component={Profile} />
+
+      {/* Protected Routes */}
+      <Route path="/">
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/exercises">
+        <ProtectedRoute>
+          <Exercises />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/exercise/:id">
+        <ProtectedRoute>
+          <ExerciseDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/tracking">
+        <ProtectedRoute>
+          <Tracking />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/education">
+        <ProtectedRoute>
+          <Education />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/profile">
+        <ProtectedRoute>
+          <Profile />
+        </ProtectedRoute>
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );

@@ -189,7 +189,7 @@ export default function Tracking() {
                       <div key={entry.id} className="border border-border rounded-lg p-4" data-testid={`craving-entry-${entry.id}`}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm text-muted-foreground">
-                            {formatDate(entry.createdAt!)}
+                            {formatDate(entry.createdAt)}
                           </span>
                           <div className="flex items-center">
                             <span className="text-sm font-medium mr-2">Intensité:</span>
@@ -258,7 +258,7 @@ export default function Tracking() {
                       <div key={session.id} className="border border-border rounded-lg p-4" data-testid={`exercise-session-${session.id}`}>
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-sm text-muted-foreground">
-                            {formatDate(session.createdAt!)}
+                            {formatDate(session.createdAt)}
                           </span>
                           <div className="flex items-center space-x-2">
                             {session.completed && (
@@ -321,7 +321,7 @@ export default function Tracking() {
                       <div key={analysis.id} className="border border-border rounded-lg p-4" data-testid={`beck-analysis-${analysis.id}`}>
                         <div className="flex items-center justify-between mb-4">
                           <span className="text-sm text-muted-foreground">
-                            {formatDate(analysis.createdAt!)}
+                            {formatDate(analysis.createdAt)}
                           </span>
                           {analysis.emotionIntensity && analysis.newIntensity && (
                             <div className="flex items-center space-x-2">
