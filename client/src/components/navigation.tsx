@@ -1,10 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { useAuthQuery } from "@/hooks/use-auth";
 
 export function Navigation() {
   const [location] = useLocation();
-  const { data: user } = useAuthQuery();
 
   const isActive = (path: string) => {
     if (path === "/" && location === "/") return true;
@@ -58,15 +56,6 @@ export function Navigation() {
               )} data-testid="nav-education">
                 Éducation
               </Link>
-              {user?.role === 'admin' && (
-                <Link to="/admin" className={cn("px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isActive("/admin")
-                    ? "bg-destructive text-destructive-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                )} data-testid="nav-admin">
-                  Admin
-                </Link>
-              )}
             </nav>
 
             <div className="flex items-center space-x-2">
@@ -83,7 +72,7 @@ export function Navigation() {
 
       {/* Bottom navigation for mobile */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40">
-        <div className={cn("grid h-16", user?.role === 'admin' ? 'grid-cols-6' : 'grid-cols-5')}>
+        <div className="grid grid-cols-5 h-16">
           <Link to="/" className={cn("flex flex-col items-center justify-center space-y-1 transition-colors",
             isActive("/") ? "text-primary" : "text-muted-foreground hover:text-primary"
           )} data-testid="nav-mobile-home">
@@ -114,14 +103,6 @@ export function Navigation() {
             <span className="material-icons text-lg">person</span>
             <span className="text-xs">Profil</span>
           </Link>
-          {user?.role === 'admin' && (
-            <Link to="/admin" className={cn("flex flex-col items-center justify-center space-y-1 transition-colors",
-              isActive("/admin") ? "text-destructive" : "text-muted-foreground hover:text-destructive"
-            )} data-testid="nav-mobile-admin">
-              <span className="material-icons text-lg">admin_panel_settings</span>
-              <span className="text-xs">Admin</span>
-            </Link>
-          )}
         </div>
       </nav>
     </>

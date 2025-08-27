@@ -24,8 +24,7 @@ import {
   type InsertUserBadge,
   type UserStats,
 } from "../shared/schema.js";
-import { randomUUID } from "crypto";
-import { eq, desc, sql, and, gte } from "drizzle-orm";
+import { eq, desc, and, gte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -38,7 +37,7 @@ export interface IStorage {
   getExercises(): Promise<Exercise[]>;
   getAllExercises(): Promise<Exercise[]>;
   createExercise(exercise: InsertExercise): Promise<Exercise>;
-  
+
   // Psychoeducation operations
   getPsychoEducationContent(): Promise<PsychoEducationContent[]>;
   getAllPsychoEducationContent(): Promise<PsychoEducationContent[]>;
@@ -75,7 +74,6 @@ export class DbStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const newUser = await db.insert(users).values(insertUser).returning().then(rows => rows[0]);
-    // Initialize stats for the new user
     await db.insert(userStats).values({ userId: newUser.id });
     return newUser;
   }

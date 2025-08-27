@@ -1,4 +1,4 @@
-# Guide de Déploiement Vercel - Apaddicto
+# Guide de Déploiement Vercel - SportTherapy
 
 ## 🚀 Déploiement rapide avec le code Vercel
 
@@ -19,7 +19,7 @@ Vous avez le code Vercel : `wQIOawWSweqWark0ZL4eI9jU`
 
 3. **Déployer l'application** :
    ```bash
-   cd Apaddicto
+   cd SportTherapy
    vercel --token wQIOawWSweqWark0ZL4eI9jU
    ```
 
@@ -27,7 +27,7 @@ Vous avez le code Vercel : `wQIOawWSweqWark0ZL4eI9jU`
    Quand Vercel vous demande, ajoutez :
    ```
    DATABASE_URL=postgresql://neondb_owner:npg_vRJU7LlnYG1y@ep-soft-bush-ab0hbww0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-   SESSION_SECRET=Apaddicto2024SecretKey
+   SESSION_SECRET=SportTherapy2024SecretKey
    ```
 
 ### Option 2 : Déploiement via Interface Web
@@ -35,10 +35,10 @@ Vous avez le code Vercel : `wQIOawWSweqWark0ZL4eI9jU`
 1. **Aller sur Vercel** : https://vercel.com
 2. **Se connecter** avec votre compte
 3. **Nouveau projet** : Cliquez sur "New Project"
-4. **Importer** : Uploadez le dossier Apaddicto ou connectez votre repo Git
+4. **Importer** : Uploadez le dossier SportTherapy ou connectez votre repo Git
 5. **Variables d'environnement** : Ajoutez dans les settings :
    - `DATABASE_URL` : `postgresql://neondb_owner:npg_vRJU7LlnYG1y@ep-soft-bush-ab0hbww0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
-   - `SESSION_SECRET` : `Apaddicto2024SecretKey`
+   - `SESSION_SECRET` : `SportTherapy2024SecretKey`
 6. **Déployer** : Cliquez sur "Deploy"
 
 ## 📋 Checklist post-déploiement
@@ -102,5 +102,5 @@ Si vous rencontrez des problèmes :
 
 ---
 
-**Votre application Apaddicto est prête ! 🎉**
+**Votre application SportTherapy est prête ! 🎉**
 
