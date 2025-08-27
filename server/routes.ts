@@ -114,6 +114,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(400).json({ message: error instanceof Error ? error.message : "Validation échouée" });
     }
   });
+
+  // Admin routes
+  app.get("/api/admin/exercises", requireAdmin, async (req, res) => {
+    try {
+      const exercises = await storage.getAllExercises();
+      res.json(exercises);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch all exercises" });
+    }
+  });
+
+  app.get("/api/admin/psycho-education", requireAdmin, async (req, res) => {
+    try {
+      const content = await storage.getAllPsychoEducationContent();
+      res.json(content);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch all psycho-education content" });
+    }
+  });
   
   // Craving entries routes
   app.post("/api/cravings", requireAuth, async (req, res) => {
