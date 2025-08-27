@@ -4,6 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProtectedRoute } from "@/components/protected-route";
+import { AdminRoute } from "@/components/admin-route";
+
+// Page Imports
 import Dashboard from "@/pages/dashboard";
 import Exercises from "@/pages/exercises";
 import ExerciseDetail from "@/pages/exercise-detail";
@@ -13,9 +16,16 @@ import Profile from "@/pages/profile";
 import Login from "@/pages/login";
 import NotFound from "@/pages/not-found";
 
+// Admin Page Imports
+import AdminDashboard from "@/pages/admin/dashboard";
+import ManageExercises from "@/pages/admin/manage-exercises";
+import ManageContent from "@/pages/admin/manage-content";
+
+
 function AppContent() {
   return (
     <Switch>
+      {/* Public Routes */}
       <Route path="/login" component={Login} />
       <Route path="/register" component={Login} />
 
@@ -51,6 +61,24 @@ function AppContent() {
         </ProtectedRoute>
       </Route>
 
+      {/* Admin Routes */}
+      <Route path="/admin">
+        <AdminRoute>
+          <AdminDashboard />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/manage-exercises">
+        <AdminRoute>
+          <ManageExercises />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/manage-content">
+        <AdminRoute>
+          <ManageContent />
+        </AdminRoute>
+      </Route>
+
+      {/* 404 Not Found */}
       <Route component={NotFound} />
     </Switch>
   );

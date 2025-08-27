@@ -36,10 +36,12 @@ export interface IStorage {
 
   // Exercise operations
   getExercises(): Promise<Exercise[]>;
+  getAllExercises(): Promise<Exercise[]>;
   createExercise(exercise: InsertExercise): Promise<Exercise>;
   
   // Psychoeducation operations
   getPsychoEducationContent(): Promise<PsychoEducationContent[]>;
+  getAllPsychoEducationContent(): Promise<PsychoEducationContent[]>;
   createPsychoEducationContent(content: InsertPsychoEducationContent): Promise<PsychoEducationContent>;
 
   // Craving operations
@@ -90,12 +92,20 @@ export class DbStorage implements IStorage {
     return db.select().from(exercises).where(eq(exercises.isActive, true)).orderBy(exercises.title);
   }
 
+  async getAllExercises(): Promise<Exercise[]> {
+    return db.select().from(exercises).orderBy(exercises.title);
+  }
+
   async createExercise(insertExercise: InsertExercise): Promise<Exercise> {
     return db.insert(exercises).values(insertExercise).returning().then(rows => rows[0]);
   }
 
   async getPsychoEducationContent(): Promise<PsychoEducationContent[]> {
     return db.select().from(psychoEducationContent).where(eq(psychoEducationContent.isActive, true)).orderBy(psychoEducationContent.title);
+  }
+
+  async getAllPsychoEducationContent(): Promise<PsychoEducationContent[]> {
+    return db.select().from(psychoEducationContent).orderBy(psychoEducationContent.title);
   }
 
   async createPsychoEducationContent(insertContent: InsertPsychoEducationContent): Promise<PsychoEducationContent> {
