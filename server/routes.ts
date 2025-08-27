@@ -264,7 +264,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route pour initialiser les données d'exemple
   app.post("/api/seed-data", requireAdmin, async (req, res) => {
     try {
-      const { seedData } = await import("./seed-data");
+      const { seedData } = await import("./seed-data.js");
       await seedData();
       res.json({ message: "Données d'exemple créées avec succès" });
     } catch (error) {

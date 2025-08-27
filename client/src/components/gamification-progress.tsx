@@ -107,7 +107,7 @@ export function GamificationProgress({ userId }: GamificationProgressProps) {
             <h4 className="text-sm font-medium text-foreground mb-3">Badges Récents</h4>
             <div className="flex space-x-2">
               {badges && badges.length > 0 ? (
-                badges.slice(0, 3).map((badge, index) => {
+                badges.slice(0, 3).map((badge: UserBadge, index: number) => {
                   const badgeInfo = getBadgeInfo(badge.badgeType);
                   return (
                     <div 

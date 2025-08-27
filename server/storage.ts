@@ -235,11 +235,4 @@ export class DbStorage implements IStorage {
   }
 }
 
-
-// In-memory storage implementation (for reference/fallback)
-export class MemStorage /* implements IStorage */ {
-  private users: Map<string, User> = new Map();
-  // ... (rest of MemStorage implementation)
-}
-
 export const storage = new DbStorage();
