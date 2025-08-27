@@ -103,7 +103,22 @@ export class DbStorage implements IStorage {
   }
 
   async createCravingEntry(insertEntry: InsertCravingEntry): Promise<CravingEntry> {
-    const newEntry = await db.insert(cravingEntries).values(insertEntry).returning().then(rows => rows[0]);
+    const valuesToInsert: {
+      userId: string;
+      intensity: number;
+      triggers?: string[];
+      emotions?: string[];
+      notes?: string | null;
+    } = {
+      userId: insertEntry.userId,
+      intensity: insertEntry.intensity,
+    };
+
+    if (insertEntry.triggers) valuesToInsert.triggers = Array.from(insertEntry.triggers as string[]);
+    if (insertEntry.emotions) valuesToInsert.emotions = Array.from(insertEntry.emotions as string[]);
+    if (insertEntry.notes) valuesToInsert.notes = insertEntry.notes;
+
+    const newEntry = await db.insert(cravingEntries).values(valuesToInsert).returning().then(rows => rows[0]);
     await this.updateAverageCraving(insertEntry.userId);
     return newEntry;
   }
@@ -222,7 +237,7 @@ export class DbStorage implements IStorage {
 
 
 // In-memory storage implementation (for reference/fallback)
-export class MemStorage implements IStorage {
+export class MemStorage /* implements IStorage */ {
   private users: Map<string, User> = new Map();
   // ... (rest of MemStorage implementation)
 }
