@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { storage } from './storage';
+import { storage } from './storage.js';
 import type { InsertUser, User } from '@shared/schema';
 
 export interface AuthUser {
