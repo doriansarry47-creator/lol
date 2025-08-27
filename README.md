@@ -1,4 +1,4 @@
-# SportTherapy - Application de Thérapie Sportive
+# Apaddicto - Application de Thérapie Sportive
 
 Une application web complète pour la gestion de la thérapie sportive avec authentification, exercices personnalisés et contenu psychoéducatif.
 
@@ -39,7 +39,7 @@ Une application web complète pour la gestion de la thérapie sportive avec auth
 #### Étape 2 : Import du projet
 
 1. Sélectionnez "Import Git Repository"
-2. Si le projet n'est pas encore sur Git, uploadez le dossier `SportTherapy` complet
+2. Si le projet n'est pas encore sur Git, uploadez le dossier `Apaddicto` complet
 3. Ou utilisez l'option "Deploy from CLI" avec le code fourni
 
 #### Étape 3 : Configuration des variables d'environnement
@@ -48,7 +48,7 @@ Dans les paramètres du projet Vercel, ajoutez ces variables d'environnement :
 
 ```
 DATABASE_URL=postgresql://neondb_owner:npg_vRJU7LlnYG1y@ep-soft-bush-ab0hbww0-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-SESSION_SECRET=SportTherapy2024SecretKey
+SESSION_SECRET=Apaddicto2024SecretKey
 NODE_ENV=production
 ```
 
@@ -84,7 +84,7 @@ L'application inclut des exercices et du contenu psychoéducatif par défaut. Po
 ## Structure du projet
 
 ```
-SportTherapy/
+Apaddicto/
 ├── client/                 # Frontend React
 │   ├── src/
 │   │   ├── components/     # Composants UI
