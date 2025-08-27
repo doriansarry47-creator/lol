@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Navigation } from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,13 @@ export default function Profile() {
     });
   };
 
+  const [, setLocation] = useLocation();
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setLocation("/login");
+    queryClient.clear(); // Clear the cache on logout
+  };
+
   const getBadgeInfo = (badgeType: string) => {
     switch (badgeType) {
       case '7_days':
@@ -120,11 +128,17 @@ export default function Profile() {
       <main className="container mx-auto px-4 py-6 pb-20 md:pb-6">
         
         {/* Page Header */}
-        <section className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Profil</h1>
-          <p className="text-muted-foreground">
-            Gérez vos informations personnelles et suivez votre progression globale.
-          </p>
+        <section className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Profil</h1>
+            <p className="text-muted-foreground">
+              Gérez vos informations personnelles et suivez votre progression globale.
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleLogout}>
+            <span className="material-icons mr-2">logout</span>
+            Se déconnecter
+          </Button>
         </section>
 
         {/* Profile Overview */}
