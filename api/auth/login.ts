@@ -3,13 +3,15 @@ import { AuthService, setAuthCookie } from '../../lib/auth.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
+    return;
   }
 
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email et mot de passe requis' });
+      res.status(400).json({ message: 'Email et mot de passe requis' });
+      return;
     }
 
     const user = await AuthService.login(email, password);

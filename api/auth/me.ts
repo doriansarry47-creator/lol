@@ -10,7 +10,8 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     // We might want to fetch the full user object from the DB
     const user = await storage.getUser(authUser.id);
     if (!user) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+      res.status(404).json({ message: 'Utilisateur non trouvé' });
+      return;
     }
     // Omit the password hash before sending
     const { password, ...userWithoutPassword } = user;

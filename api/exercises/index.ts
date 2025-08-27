@@ -7,25 +7,23 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     try {
       const exercises = await storage.getExercises();
-      return res.status(200).json(exercises);
+      res.status(200).json(exercises);
     } catch (error) {
-      return res.status(500).json({ message: "Erreur lors de la récupération des exercices" });
+      res.status(500).json({ message: "Erreur lors de la récupération des exercices" });
     }
-  }
-
-  if (req.method === 'POST') {
-    return withAdminAuth(async (req, res) => {
+  } else if (req.method === 'POST') {
+    await withAdminAuth(async (req, res) => {
       try {
         const data = insertExerciseSchema.parse(req.body);
         const exercise = await storage.createExercise(data);
-        return res.status(201).json(exercise);
+        res.status(201).json(exercise);
       } catch (error) {
-        return res.status(400).json({ message: error instanceof Error ? error.message : "Validation échouée" });
+        res.status(400).json({ message: error instanceof Error ? error.message : "Validation échouée" });
       }
     })(req, res);
+  } else {
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
-
-  return res.status(405).json({ message: 'Method Not Allowed' });
 }
 
 export default handler;

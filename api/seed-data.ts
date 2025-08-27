@@ -4,14 +4,15 @@ import { seedData } from '../lib/seed-data.js';
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
+    return;
   }
 
   try {
     await seedData();
-    return res.status(200).json({ message: "Données d'exemple créées avec succès" });
+    res.status(200).json({ message: "Données d'exemple créées avec succès" });
   } catch (error) {
-    return res.status(500).json({ message: "Erreur lors de la création des données d'exemple" });
+    res.status(500).json({ message: "Erreur lors de la création des données d'exemple" });
   }
 }
 

@@ -10,26 +10,24 @@ async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
       const entries = await storage.getCravingEntries(authUser.id, limit);
-      return res.status(200).json(entries);
+      res.status(200).json(entries);
     } catch (error) {
-      return res.status(500).json({ message: "Failed to fetch craving entries" });
+      res.status(500).json({ message: "Failed to fetch craving entries" });
     }
-  }
-
-  if (req.method === 'POST') {
+  } else if (req.method === 'POST') {
     try {
       const data = insertCravingEntrySchema.parse({
         ...req.body,
         userId: authUser.id,
       });
       const entry = await storage.createCravingEntry(data);
-      return res.status(201).json(entry);
+      res.status(201).json(entry);
     } catch (error) {
-      return res.status(400).json({ message: error instanceof Error ? error.message : "Validation failed" });
+      res.status(400).json({ message: error instanceof Error ? error.message : "Validation failed" });
     }
+  } else {
+    res.status(405).json({ message: 'Method Not Allowed' });
   }
-
-  return res.status(405).json({ message: 'Method Not Allowed' });
 }
 
 export default withAuth(handler);

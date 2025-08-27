@@ -4,7 +4,8 @@ import { storage } from '../../lib/storage.js';
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
+    return;
   }
 
   const authUser = (req as any).user;
@@ -12,12 +13,13 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const user = await storage.getUser(authUser.id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "User not found" });
+      return;
     }
     const { password, ...userWithoutPassword } = user;
-    return res.status(200).json(userWithoutPassword);
+    res.status(200).json(userWithoutPassword);
   } catch (error) {
-    return res.status(500).json({ message: "Failed to fetch user profile" });
+    res.status(500).json({ message: "Failed to fetch user profile" });
   }
 }
 

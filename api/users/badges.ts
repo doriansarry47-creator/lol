@@ -4,16 +4,17 @@ import { storage } from '../../lib/storage.js';
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
+    return;
   }
 
   const authUser = (req as any).user;
 
   try {
     const badges = await storage.getUserBadges(authUser.id);
-    return res.status(200).json(badges);
+    res.status(200).json(badges);
   } catch (error) {
-    return res.status(500).json({ message: "Failed to fetch user badges" });
+    res.status(500).json({ message: "Failed to fetch user badges" });
   }
 }
 

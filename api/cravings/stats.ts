@@ -4,7 +4,8 @@ import { storage } from '../../lib/storage.js';
 
 async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ message: 'Method Not Allowed' });
+    res.status(405).json({ message: 'Method Not Allowed' });
+    return;
   }
 
   const authUser = (req as any).user;
@@ -12,9 +13,9 @@ async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const days = req.query.days ? parseInt(req.query.days as string) : undefined;
     const stats = await storage.getCravingStats(authUser.id, days);
-    return res.status(200).json(stats);
+    res.status(200).json(stats);
   } catch (error) {
-    return res.status(500).json({ message: "Failed to fetch craving stats" });
+    res.status(500).json({ message: "Failed to fetch craving stats" });
   }
 }
 
