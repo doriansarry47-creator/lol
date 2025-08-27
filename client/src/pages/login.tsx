@@ -210,6 +210,17 @@ export default function Login() {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-role">Rôle (entrez "admin" pour les privilèges admin)</Label>
+                    <Input
+                      id="register-role"
+                      type="text"
+                      value={registerForm.role}
+                      onChange={(e) =>
+                        setRegisterForm({ ...registerForm, role: e.target.value })
+                      }
+                    />
+                  </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Création..." : "Créer mon compte"}
                   </Button>
