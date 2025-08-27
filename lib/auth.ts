@@ -108,17 +108,19 @@ export function withAuth(handler: ApiHandler): ApiHandler {
   return async (req, res) => {
     const token = req.cookies[COOKIE_NAME];
     if (!token) {
-      return res.status(401).json({ message: 'Authentication requis' });
+      res.status(401).json({ message: 'Authentication requis' });
+      return;
     }
 
     const user = verifyJwt(token);
     if (!user) {
-      return res.status(401).json({ message: 'Token non valide' });
+      res.status(401).json({ message: 'Token non valide' });
+      return;
     }
 
     // Attach user to request object for use in the handler
     (req as any).user = user;
-    return handler(req, res);
+    await handler(req, res);
   };
 }
 
@@ -126,8 +128,9 @@ export function withAdminAuth(handler: ApiHandler): ApiHandler {
   return withAuth(async (req, res) => {
     const user = (req as any).user as AuthUser;
     if (user.role !== 'admin') {
-      return res.status(403).json({ message: 'Accès administrateur requis' });
+      res.status(403).json({ message: 'Accès administrateur requis' });
+      return;
     }
-    return handler(req, res);
+    await handler(req, res);
   });
 }
