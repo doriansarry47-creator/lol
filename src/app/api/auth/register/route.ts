@@ -1,48 +1,12 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { db } from '@/lib/db';
-import { users, userStats, insertUserSchema } from '@/shared/schema';
-import { eq } from 'drizzle-orm';
+import { AuthService } from '@/lib/auth-service';
+import { ZodError } from 'zod';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, password, firstName, lastName, role } = insertUserSchema.pick({
-      email: true,
-      password: true,
-      firstName: true,
-      lastName: true,
-      role: true
-    }).parse(body);
 
-    // Check if user already exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-
-    if (existingUser) {
-      return new NextResponse('Un utilisateur avec cet email existe déjà', { status: 409 });
-    }
-
-    // Hash the password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    // Create the user and their initial stats
-    const newUser = await db.transaction(async (tx) => {
-        const [createdUser] = await tx.insert(users).values({
-            email,
-            password: hashedPassword,
-            firstName,
-            lastName,
-            role: role || 'patient',
-        }).returning();
-
-        // Initialize stats for the new user, as was done in the legacy code
-        await tx.insert(userStats).values({ userId: createdUser.id });
-
-        return createdUser;
-    });
+    const newUser = await AuthService.register(body);
 
     // Don't return the password hash
     const { password: _, ...userWithoutPassword } = newUser;
@@ -50,8 +14,16 @@ export async function POST(req: Request) {
     return NextResponse.json(userWithoutPassword, { status: 201 });
 
   } catch (error) {
-    console.error('Registration error:', error);
-    // Zod errors can be handled more gracefully, but for now, a generic error is fine.
+    console.error('Registration API Error:', error);
+
+    if (error instanceof ZodError) {
+      return new NextResponse(JSON.stringify(error.errors), { status: 400 });
+    }
+
+    if (error instanceof Error) {
+        return new NextResponse(error.message, { status: 400 });
+    }
+
     return new NextResponse('Erreur lors de l\'inscription', { status: 500 });
   }
 }
