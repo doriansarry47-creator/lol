@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
-import { users, insertUserSchema } from '@/shared/schema';
+import { users, userStats, insertUserSchema } from '@/shared/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(req: Request) {
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         }).returning();
 
         // Initialize stats for the new user, as was done in the legacy code
-        await tx.insert(users).values({ id: createdUser.id });
+        await tx.insert(userStats).values({ userId: createdUser.id });
 
         return createdUser;
     });
