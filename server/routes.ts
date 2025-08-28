@@ -1,5 +1,4 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
 import { AuthService, requireAuth, requireAdmin } from "./auth.js";
 import { insertCravingEntrySchema, insertExerciseSessionSchema, insertBeckAnalysisSchema, insertUserSchema, insertExerciseSchema, insertPsychoEducationContentSchema } from "../shared/schema.js";
@@ -7,7 +6,7 @@ import { z } from "zod";
 import { db } from './db.js';
 import { sql } from 'drizzle-orm';
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export function registerRoutes(app: Express) {
 
   app.get("/api/test-db", async (_req, res) => {
     try {
@@ -303,6 +302,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
 }
