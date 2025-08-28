@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
-import memorystore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 
@@ -12,18 +12,17 @@ if (app.get("env") === "production" && !process.env.SESSION_SECRET) {
   throw new Error("SESSION_SECRET must be set in production");
 }
 
-const MemoryStore = memorystore(session);
+const PgStore = connectPgSimple(session);
 app.use(
   session({
-    store: new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
+    store: new PgStore({
+      conString: process.env.DATABASE_URL,
+      createTableIfMissing: true,
     }),
     secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      // secure: app.get("env") === "production",
-      // httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     },
   }),
