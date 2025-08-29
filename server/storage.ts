@@ -32,6 +32,9 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(userId: string, data: Partial<Omit<User, 'id' | 'password' | 'role' | 'createdAt' | 'updatedAt'>>): Promise<User>;
+  updatePassword(userId: string, newHashedPassword: string): Promise<User>;
+  deleteUser(userId: string): Promise<void>;
   updateUserStats(userId: string, stats: Partial<UserStats>): Promise<UserStats>;
 
   // Exercise operations
@@ -78,6 +81,33 @@ export class DbStorage implements IStorage {
     // Initialize stats for the new user
     await db.insert(userStats).values({ userId: newUser.id });
     return newUser;
+  }
+
+  async updateUser(userId: string, data: Partial<Omit<User, 'id' | 'password' | 'role' | 'createdAt' | 'updatedAt'>>): Promise<User> {
+    const updatedUser = await db.update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser[0];
+  }
+
+  async updatePassword(userId: string, newHashedPassword: string): Promise<User> {
+    return db.update(users)
+      .set({ password: newHashedPassword, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning()
+      .then(rows => rows[0]);
+  }
+
+  async deleteUser(userId: string): Promise<void> {
+    await db.transaction(async (tx) => {
+      await tx.delete(userBadges).where(eq(userBadges.userId, userId));
+      await tx.delete(userStats).where(eq(userStats.userId, userId));
+      await tx.delete(beckAnalyses).where(eq(beckAnalyses.userId, userId));
+      await tx.delete(exerciseSessions).where(eq(exerciseSessions.userId, userId));
+      await tx.delete(cravingEntries).where(eq(cravingEntries.userId, userId));
+      await tx.delete(users).where(eq(users.id, userId));
+    });
   }
 
   async updateUserStats(userId: string, statsUpdate: Partial<UserStats>): Promise<UserStats> {

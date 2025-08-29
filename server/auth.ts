@@ -97,6 +97,60 @@ export class AuthService {
       role: user.role,
     };
   }
+
+  static async updateUser(userId: string, data: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  }): Promise<AuthUser> {
+    const user = await storage.getUser(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    if (data.email && data.email !== user.email) {
+      const existing = await storage.getUserByEmail(data.email);
+      if (existing) {
+        throw new Error("Cet email est déjà utilisé par un autre compte.");
+      }
+    }
+
+    const updatedUser = await storage.updateUser(userId, {
+      firstName: data.firstName ?? user.firstName,
+      lastName: data.lastName ?? user.lastName,
+      email: data.email ?? user.email,
+    });
+
+    return {
+      id: updatedUser.id,
+      email: updatedUser.email,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      role: updatedUser.role,
+    };
+  }
+
+  static async updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<void> {
+    if (!oldPassword || !newPassword) {
+      throw new Error("L'ancien et le nouveau mot de passe sont requis.");
+    }
+    if (newPassword.length < 6) {
+      throw new Error("Le nouveau mot de passe doit contenir au moins 6 caractères.");
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      throw new Error("Utilisateur non trouvé.");
+    }
+
+    const isMatch = await this.verifyPassword(oldPassword, user.password);
+    if (!isMatch) {
+      throw new Error("L'ancien mot de passe est incorrect.");
+    }
+
+    const hashedNewPassword = await this.hashPassword(newPassword);
+    await storage.updatePassword(userId, hashedNewPassword);
+  }
 }
 
 // Middleware pour vérifier l'authentification
