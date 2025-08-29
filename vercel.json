@@ -1,23 +1,38 @@
+@@ -1,33 +1,27 @@
 {
   "version": 2,
   "builds": [
     {
-      "src": "api/index.js",
-      "use": "@vercel/node"
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "npm run build:client",
+        "outputDir": "dist/public"
+      }
+      "config": { "distDir": "dist/public" }
     },
     {
-      "src": "dist/**/*",
-      "use": "@vercel/static"
+      "src": "server/index.ts",
+      "use": "@vercel/node",
+      "config": {
+        "buildCommand": "npm run build:server"
+      }
+      "src": "dist/server/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "server/index.ts"
+      "dest": "/dist/server/index.js"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/dist/$1"
+      "dest": "/index.html"
     }
   ]
 }
