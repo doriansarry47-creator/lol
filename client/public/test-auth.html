@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Test</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 1em; }
+        .form-group label { display: block; }
+        .form-group input { width: 100%; padding: 0.5em; }
+        .response { background-color: #f0f0f0; padding: 1em; margin-top: 1em; white-space: pre-wrap; word-break: break-all; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Authentication Test Page</h1>
+
+        <h2>Register</h2>
+        <form id="registerForm" class="form-group">
+            <label>Email: <input type="email" id="regEmail" required></label>
+            <label>Password: <input type="password" id="regPassword" required></label>
+            <label>First Name: <input type="text" id="regFirstName"></label>
+            <label>Last Name: <input type="text" id="regLastName"></label>
+            <button type="submit">Register</button>
+        </form>
+
+        <h2>Login</h2>
+        <form id="loginForm" class="form-group">
+            <label>Email: <input type="email" id="loginEmail" required></label>
+            <label>Password: <input type="password" id="loginPassword" required></label>
+            <button type="submit">Login</button>
+        </form>
+
+        <h2>Actions</h2>
+        <div class="form-group">
+            <button id="meBtn">Get Current User (/me)</button>
+            <button id="logoutBtn">Logout</button>
+        </div>
+
+        <h2>Test Accounts</h2>
+        <ul>
+            <li><b>Patient:</b> patient@apaddicto.com / patient123</li>
+            <li><b>Test:</b> test@example.com / password123</li>
+        </ul>
+
+        <h2>API Response</h2>
+        <pre id="response" class="response"></pre>
+    </div>
+
+    <script>
+        const API_BASE = ''; // Assuming the test page is served from the same origin as the API
+        const responseEl = document.getElementById('response');
+
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(API_BASE + endpoint, options);
+                const data = await response.json();
+                responseEl.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                responseEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const firstName = document.getElementById('regFirstName').value;
+            const lastName = document.getElementById('regLastName').value;
+            apiCall('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, firstName, lastName }),
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            apiCall('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+        });
+
+        document.getElementById('meBtn').addEventListener('click', () => {
+            apiCall('/api/auth/me');
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            apiCall('/api/auth/logout', { method: 'POST' });
+        });
+    </script>
+</body>
+</html>

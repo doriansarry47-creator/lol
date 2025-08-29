@@ -1,10 +1,22 @@
+import 'dotenv/config'
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import memorystore from "memorystore";
+import cors from "cors";
+import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 
 const app = express();
+const server = createServer(app);
+
+app.use(
+  cors({
+    origin: true, // Reflects the request origin
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -62,11 +74,6 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Static file serving for production
-if (process.env.NODE_ENV === "production") {
-  serveStatic(app);
-}
-
 // Global error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || err.statusCode || 500;
@@ -74,5 +81,18 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
   res.status(status).json({ message });
 });
+
+if (process.env.NODE_ENV === "development") {
+  setupVite(app, server);
+} else {
+  // Static file serving for production
+  serveStatic(app);
+}
+
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  log(`Server listening on port ${port}`);
+});
+
 
 export default app;
