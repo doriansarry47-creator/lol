@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import memorystore from "memorystore";
@@ -20,27 +20,6 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-if (app.get("env") === "production" && !process.env.SESSION_SECRET) {
-  throw new Error("SESSION_SECRET must be set in production");
-}
-
-const MemoryStore = memorystore(session);
-app.use(
-  session({
-    store: new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
-    }),
-    secret: process.env.SESSION_SECRET || "dev-secret",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      // secure: app.get("env") === "production",
-      // httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    },
-  }),
-);
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -59,11 +38,6 @@ app.use((req, res, next) => {
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
       log(logLine);
     }
   });
@@ -71,7 +45,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register API routes
+if (app.get("env") === "production" && !process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be set in production");
+}
+
+const MemoryStore = memorystore(session);
+app.use(
+  session({
+    store: new MemoryStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    }),
+    secret: process.env.SESSION_SECRET || "dev-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    },
+  }),
+);
+
 registerRoutes(app);
 
 // Global error handler
@@ -85,7 +79,6 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 if (process.env.NODE_ENV === "development") {
   setupVite(app, server);
 } else {
-  // Static file serving for production
   serveStatic(app);
 }
 
@@ -93,6 +86,5 @@ const port = process.env.PORT || 3000;
 server.listen(port, () => {
   log(`Server listening on port ${port}`);
 });
-
 
 export default app;
