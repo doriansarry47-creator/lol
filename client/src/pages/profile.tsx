@@ -40,18 +40,22 @@ export default function Profile() {
   });
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const updateUserMutation = useMutation({
-    mutationFn: (updatedUser: { firstName: string; lastName: string }) => {
+    mutationFn: (updatedUser: { firstName: string; lastName: string; email?: string }) => {
       return fetch("/api/users/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser),
       }).then((res) => {
-        if (!res.ok) throw new Error("Failed to update profile");
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.message || "Failed to update profile") });
+        }
         return res.json();
       });
     },
@@ -62,10 +66,10 @@ export default function Profile() {
         description: "Vos informations ont été mises à jour avec succès.",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Erreur",
-        description: "Impossible de mettre à jour le profil.",
+        description: error.message || "Impossible de mettre à jour le profil.",
         variant: "destructive",
       });
     },
@@ -73,7 +77,48 @@ export default function Profile() {
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserMutation.mutate({ firstName, lastName });
+    
+    // Validation basique
+    if (!firstName.trim() && !lastName.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez saisir au moins un prénom ou un nom.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validation de la longueur
+    if (firstName.trim().length > 50 || lastName.trim().length > 50) {
+      toast({
+        title: "Erreur",
+        description: "Le prénom et le nom ne peuvent pas dépasser 50 caractères.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const updateData: { firstName: string; lastName: string; email?: string } = {
+      firstName: firstName.trim(), 
+      lastName: lastName.trim()
+    };
+    
+    // Inclure l'email seulement si il a été modifié
+    if (isEditingEmail && email !== user?.email) {
+      // Validation email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez saisir une adresse email valide.",
+          variant: "destructive",
+        });
+        return;
+      }
+      updateData.email = email.trim();
+    }
+    
+    updateUserMutation.mutate(updateData);
   };
 
   const [oldPassword, setOldPassword] = useState("");
@@ -113,6 +158,37 @@ export default function Profile() {
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation des champs requis
+    if (!oldPassword.trim()) {
+      toast({
+        title: "Erreur",
+        description: "L'ancien mot de passe est requis.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!newPassword.trim()) {
+      toast({
+        title: "Erreur",
+        description: "Le nouveau mot de passe est requis.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validation de la longueur du mot de passe
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erreur",
+        description: "Le nouveau mot de passe doit contenir au moins 6 caractères.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Validation de la correspondance
     if (newPassword !== confirmPassword) {
       toast({
         title: "Erreur",
@@ -121,6 +197,17 @@ export default function Profile() {
       });
       return;
     }
+    
+    // Vérifier que le nouveau mot de passe est différent de l'ancien
+    if (oldPassword === newPassword) {
+      toast({
+        title: "Erreur",
+        description: "Le nouveau mot de passe doit être différent de l'ancien.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     updatePasswordMutation.mutate({ oldPassword, newPassword });
   };
 
@@ -162,6 +249,7 @@ export default function Profile() {
     if (user) {
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
+      setEmail(user.email || "");
     }
   }, [user]);
 
@@ -567,6 +655,8 @@ export default function Profile() {
                         id="firstName"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
+                        placeholder="Votre prénom"
+                        maxLength={50}
                         data-testid="input-firstName"
                       />
                     </div>
@@ -576,13 +666,37 @@ export default function Profile() {
                         id="lastName"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
+                        placeholder="Votre nom de famille"
+                        maxLength={50}
                         data-testid="input-lastName"
                       />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={user?.email || ""} disabled />
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="email">Email</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditingEmail(!isEditingEmail)}
+                      >
+                        {isEditingEmail ? "Annuler" : "Modifier"}
+                      </Button>
+                    </div>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={isEditingEmail ? email : (user?.email || "")} 
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={!isEditingEmail}
+                      placeholder="votre@email.com"
+                    />
+                    {isEditingEmail && (
+                      <p className="text-sm text-muted-foreground">
+                        Attention : La modification de votre email peut affecter votre connexion.
+                      </p>
+                    )}
                   </div>
                   <Button type="submit" disabled={updateUserMutation.isPending}>
                     {updateUserMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
@@ -604,6 +718,8 @@ export default function Profile() {
                       type="password"
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
+                      placeholder="Saisissez votre mot de passe actuel"
+                      required
                       data-testid="input-old-password"
                     />
                   </div>
@@ -614,6 +730,9 @@ export default function Profile() {
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nouveau mot de passe (min. 6 caractères)"
+                      minLength={6}
+                      required
                       data-testid="input-new-password"
                     />
                   </div>
@@ -624,6 +743,9 @@ export default function Profile() {
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirmez votre nouveau mot de passe"
+                      minLength={6}
+                      required
                       data-testid="input-confirm-password"
                     />
                   </div>
@@ -716,7 +838,14 @@ export default function Profile() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Cette action est irréversible. Toutes vos données seront supprimées de manière permanente.
+                        Cette action est irréversible. Toutes vos données seront supprimées de manière permanente :
+                        <ul className="mt-2 ml-4 list-disc text-sm">
+                          <li>Vos informations personnelles</li>
+                          <li>Vos sessions d'exercices</li>
+                          <li>Vos entrées de craving</li>
+                          <li>Vos analyses cognitives</li>
+                          <li>Vos badges et statistiques</li>
+                        </ul>
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
