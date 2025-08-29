@@ -51,14 +51,25 @@
     </div>
 
     <script>
-        const API_BASE = ''; // Assuming the test page is served from the same origin as the API
+        const API_BASE = 'http://localhost:3000';
         const responseEl = document.getElementById('response');
 
         async function apiCall(endpoint, options = {}) {
             try {
-                const response = await fetch(API_BASE + endpoint, options);
-                const data = await response.json();
-                responseEl.textContent = JSON.stringify(data, null, 2);
+                // Add credentials: 'include' to all requests
+                const fetchOptions = { ...options, credentials: 'include' };
+
+                const response = await fetch(API_BASE + endpoint, fetchOptions);
+
+                // Try to parse as JSON, but fall back to text if it fails
+                const responseText = await response.text();
+                try {
+                    const jsonData = JSON.parse(responseText);
+                    responseEl.textContent = JSON.stringify(jsonData, null, 2);
+                } catch (e) {
+                    responseEl.textContent = responseText;
+                }
+
             } catch (error) {
                 responseEl.textContent = `Error: ${error.message}`;
             }
@@ -89,7 +100,7 @@
         });
 
         document.getElementById('meBtn').addEventListener('click', () => {
-            apiCall('/api/auth/me');
+            apiCall('/api/auth/me', { method: 'GET' });
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
