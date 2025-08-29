@@ -1,19 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import { Navigation } from "@/components/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import type { User, UserStats, UserBadge } from "@shared/schema";
-
-const DEMO_USER_ID = "demo-user-123";
 
 interface CravingStats {
   average: number;
@@ -21,37 +31,156 @@ interface CravingStats {
 }
 
 export default function Profile() {
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [notifications, setNotifications] = useState({
     dailyReminder: true,
     cravingAlert: true,
     progressUpdate: false,
     weeklyReport: true
   });
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading: userLoading } = useQuery<User>({
-    queryKey: ["/api/users", DEMO_USER_ID],
-    initialData: { level: 1, points: 0, email: '', password: '', firstName: '', lastName: '', profileImageUrl: '', role: '', isActive: true, id: '', createdAt: new Date(), updatedAt: new Date() },
+  const updateUserMutation = useMutation({
+    mutationFn: (updatedUser: { firstName: string; lastName: string }) => {
+      return fetch("/api/users/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedUser),
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to update profile");
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users/profile"] });
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été mises à jour avec succès.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le profil.",
+        variant: "destructive",
+      });
+    },
   });
 
+  const handleUpdateProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateUserMutation.mutate({ firstName, lastName });
+  };
+
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: (passwords: { oldPassword: string; newPassword: string }) => {
+      return fetch("/api/users/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(passwords),
+      }).then((res) => {
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.message || "Failed to update password") });
+        }
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Mot de passe mis à jour",
+        description: "Votre mot de passe a été changé avec succès.",
+      });
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Erreur",
+        description: "Les nouveaux mots de passe ne correspondent pas.",
+        variant: "destructive",
+      });
+      return;
+    }
+    updatePasswordMutation.mutate({ oldPassword, newPassword });
+  };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => {
+      return fetch("/api/users/profile", {
+        method: "DELETE",
+      }).then((res) => {
+        if (!res.ok) throw new Error("Failed to delete account");
+        return res.json();
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Compte supprimé",
+        description: "Votre compte a été supprimé avec succès.",
+      });
+      handleLogout();
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le compte.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    deleteAccountMutation.mutate();
+  };
+
+  const { data: user, isLoading: userLoading } = useQuery<User>({
+    queryKey: ["/api/users/profile"],
+    enabled: !!authUser,
+  });
+
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+    }
+  }, [user]);
+
   const { data: userStats, isLoading: statsLoading } = useQuery<UserStats>({
-    queryKey: ["/api/users", DEMO_USER_ID, "stats"],
-    initialData: { exercisesCompleted: 0, totalDuration: 0, currentStreak: 0, longestStreak: 0, averageCraving: 0, id: '', userId: '', updatedAt: new Date() },
+    queryKey: ["/api/users/stats"],
+    enabled: !!authUser,
   });
 
   const { data: badges, isLoading: badgesLoading } = useQuery<UserBadge[]>({
-    queryKey: ["/api/users", DEMO_USER_ID, "badges"],
-    initialData: [],
+    queryKey: ["/api/users/badges"],
+    enabled: !!authUser,
   });
 
   const { data: cravingStats } = useQuery<CravingStats>({
-    queryKey: ["/api/cravings", DEMO_USER_ID, "stats"],
-    initialData: { average: 0, trend: 0 },
+    queryKey: ["/api/cravings/stats"],
+    enabled: !!authUser,
   });
 
-  const isLoading = userLoading || statsLoading || badgesLoading;
+  const isLoading = authLoading || userLoading || statsLoading || badgesLoading;
 
   if (isLoading) {
     return (
@@ -425,35 +554,83 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-material" data-testid="card-preferences">
+            <Card className="shadow-material" data-testid="card-profile-info">
               <CardHeader>
-                <CardTitle>Préférences</CardTitle>
+                <CardTitle>Informations Personnelles</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="reminder-time" className="font-medium">Heure de rappel quotidien</Label>
-                  <Input
-                    id="reminder-time"
-                    type="time"
-                    defaultValue="09:00"
-                    className="mt-2"
-                    data-testid="input-reminder-time"
-                  />
-                </div>
+              <CardContent>
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Prénom</Label>
+                      <Input
+                        id="firstName"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        data-testid="input-firstName"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Nom</Label>
+                      <Input
+                        id="lastName"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        data-testid="input-lastName"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={user?.email || ""} disabled />
+                  </div>
+                  <Button type="submit" disabled={updateUserMutation.isPending}>
+                    {updateUserMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
 
-                <div>
-                  <Label htmlFor="emergency-contact" className="font-medium">Contact d'urgence (optionnel)</Label>
-                  <Input
-                    id="emergency-contact"
-                    type="tel"
-                    placeholder="Numéro de téléphone"
-                    className="mt-2"
-                    data-testid="input-emergency-contact"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Ce contact sera notifié en cas de détection de détresse importante
-                  </p>
-                </div>
+            <Card className="shadow-material" data-testid="card-change-password">
+              <CardHeader>
+                <CardTitle>Changer le mot de passe</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="oldPassword">Ancien mot de passe</Label>
+                    <Input
+                      id="oldPassword"
+                      type="password"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      data-testid="input-old-password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      data-testid="input-new-password"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      data-testid="input-confirm-password"
+                    />
+                  </div>
+                  <Button type="submit" disabled={updatePasswordMutation.isPending}>
+                    {updatePasswordMutation.isPending ? "Mise à jour..." : "Changer le mot de passe"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>
@@ -528,10 +705,31 @@ export default function Profile() {
                 <p className="text-muted-foreground">
                   Attention : cette action est irréversible et supprimera définitivement toutes vos données.
                 </p>
-                <Button variant="destructive" data-testid="button-delete-account">
-                  <span className="material-icons mr-2">delete_forever</span>
-                  Supprimer mon compte
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" data-testid="button-delete-account">
+                      <span className="material-icons mr-2">delete_forever</span>
+                      Supprimer mon compte
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Cette action est irréversible. Toutes vos données seront supprimées de manière permanente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        disabled={deleteAccountMutation.isPending}
+                      >
+                        {deleteAccountMutation.isPending ? "Suppression..." : "Supprimer"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </CardContent>
             </Card>
           </TabsContent>

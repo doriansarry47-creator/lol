@@ -275,6 +275,46 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.put("/api/users/profile", requireAuth, async (req, res) => {
+    try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
+      const userId = req.session.user.id;
+      const { firstName, lastName, email } = req.body;
+      const updatedUser = await AuthService.updateUser(userId, { firstName, lastName, email });
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Erreur lors de la mise à jour du profil" });
+    }
+  });
+
+  app.put("/api/users/password", requireAuth, async (req, res) => {
+    try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
+      const userId = req.session.user.id;
+      const { oldPassword, newPassword } = req.body;
+      await AuthService.updatePassword(userId, oldPassword, newPassword);
+      res.json({ message: "Mot de passe mis à jour avec succès" });
+    } catch (error) {
+      res.status(400).json({ message: error instanceof Error ? error.message : "Erreur lors de la mise à jour du mot de passe" });
+    }
+  });
+
+  app.delete("/api/users/profile", requireAuth, async (req, res) => {
+    try {
+      if (!req.session || !req.session.user) return res.status(401).json({ message: "Session non valide" });
+      const userId = req.session.user.id;
+      await storage.deleteUser(userId);
+      req.session.destroy((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Erreur lors de la déconnexion après la suppression du compte" });
+        }
+        res.json({ message: "Compte supprimé avec succès" });
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Erreur lors de la suppression du compte" });
+    }
+  });
+
   // Create demo user for development
   app.post("/api/demo-user", async (req, res) => {
     try {
