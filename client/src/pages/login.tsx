@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useLoginMutation, useRegisterMutation, useAuthQuery } from "@/hooks/use-auth";
 import { Instagram } from "lucide-react";
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { data: user } = useAuthQuery();
 
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -26,81 +27,51 @@ export default function Login() {
     role: "patient",
   });
 
+  const loginMutation = useLoginMutation();
+  const registerMutation = useRegisterMutation();
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginForm),
+      await loginMutation.mutateAsync(loginForm);
+      toast({
+        title: "Connexion réussie",
+        description: "Bienvenue dans votre espace thérapeutique",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue dans votre espace thérapeutique",
-        });
-        setLocation("/");
-      } else {
-        toast({
-          title: "Erreur de connexion",
-          description: data.message || "Vérifiez vos identifiants",
-          variant: "destructive",
-        });
-      }
+      // Redirection will happen via useEffect when user state updates
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de se connecter au serveur",
+        title: "Erreur de connexion",
+        description: error instanceof Error ? error.message : "Vérifiez vos identifiants",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(registerForm),
+      await registerMutation.mutateAsync(registerForm);
+      toast({
+        title: "Inscription réussie",
+        description: "Votre compte a été créé avec succès",
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast({
-          title: "Inscription réussie",
-          description: "Votre compte a été créé avec succès",
-        });
-        setLocation("/");
-      } else {
-        toast({
-          title: "Erreur d'inscription",
-          description: data.message || "Vérifiez vos informations",
-          variant: "destructive",
-        });
-      }
+      // Redirection will happen via useEffect when user state updates
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de créer le compte",
+        title: "Erreur d'inscription",
+        description: error instanceof Error ? error.message : "Vérifiez vos informations",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -153,8 +124,8 @@ export default function Login() {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Connexion..." : "Se connecter"}
+                  <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+                    {loginMutation.isPending ? "Connexion..." : "Se connecter"}
                   </Button>
                 </form>
               </TabsContent>
@@ -221,8 +192,8 @@ export default function Login() {
                       }
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Création..." : "Créer mon compte"}
+                  <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+                    {registerMutation.isPending ? "Création..." : "Créer mon compte"}
                   </Button>
                 </form>
               </TabsContent>
