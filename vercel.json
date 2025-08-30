@@ -5,22 +5,29 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "npm run build:client",
-        "outputDir": "dist/public"
+        "buildCommand": "npm run vercel-build",
+        "outputDirectory": "dist/public"
       }
     },
     {
-      "src": "dist/server/index.js",
+      "src": "server/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/dist/server/index.js"
+      "dest": "server/index.ts"
     },
     {
       "handle": "filesystem"
     },
     {
-      "src": "
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
